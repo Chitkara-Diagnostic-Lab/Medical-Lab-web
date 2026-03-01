@@ -12,7 +12,7 @@ Medi-Book enables users to:
 - Browse lab tests  
 - Book appointments  
 - View/download reports  
-- Role-based access (USER / ADMIN / LAB_STAFF)
+- Role-based access (USER / ADMIN)
 
 ---
 

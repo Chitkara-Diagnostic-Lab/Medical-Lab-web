@@ -44,3 +44,8 @@ export class DuplicateBookingError extends BookingError {
     super('You already have a booking for this time slot', 'DUPLICATE_BOOKING', 409)
   }
 }
+export class BookingNotFoundError extends BookingError {
+  constructor(message = 'Booking not found') {
+    super(message, 'BOOKING_NOT_FOUND', 404)
+  }
+}
