@@ -3,7 +3,7 @@
 import { requireAuth } from '@/lib/server-auth'
 import { redirect } from 'next/navigation'
 import { createBookingSchema } from '@/lib/validation/booking'
-import { BookingService } from '@/lib/services/booking.service'
+import { createBooking } from '@/lib/services/booking_service'
 
 type BookingResult = { error: string } | void
 
@@ -25,7 +25,7 @@ export async function createBookingAction(
   }
   
   try {
-    const booking = await BookingService.createBooking({
+    const booking = await createBooking({
       userId,
       testId,
       slotId,

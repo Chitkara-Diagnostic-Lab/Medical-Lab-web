@@ -14,21 +14,21 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  emailVerified Boolean   @default(false)
+  id            String        @id @default(cuid())
+  email         String        @unique
+  emailVerified Boolean       @default(false)
   name          String
   PhoneNumber   String?
   image         String?
-  role          Role      @default(USER)
+  role          Role          @default(USER)
   sessions      Session[]
   accounts      Account[]
-  bookings      Booking[]
-  payment       Payment[]
+  appointments  Appointment[]
+  payments      Payment[]
   auditLogs     AuditLog[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
   @@map("user")
 }
 
@@ -66,22 +66,23 @@ model Account {
   @@map("account")
 }
 
-model Test{
-  id    String  @id @default(cuid())
-  name  String
-  description   String?
-  price       Float
-  duration    Int
-  category    String
-  isActive    Boolean   @default(true)
-  bookings    Booking[]
-  slots       Timeslot[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+model Test {
+  id               String            @id @default(cuid())
+  name             String
+  description      String?
+  price            Float
+  duration         Int
+  category         String
+  isActive         Boolean           @default(true)
+  slots            Timeslot[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  appointmentItems AppointmentItem[]
 
   @@index([isActive, category])
   @@map("test")
 }
+
 model Verification {
   id         String   @id @default(cuid())
   identifier String
@@ -93,127 +94,135 @@ model Verification {
   @@unique([identifier, value])
   @@map("verification")
 }
-model Booking {
-  id             String   @id @default(cuid())
-  bookingNumber  String   @unique @default(cuid())
-  userId         String
-  user           User     @relation(fields: [userId], references: [id])
-  testId         String
-  test           Test     @relation(fields: [testId], references: [id])
-  slotId         String
-  slot           Timeslot     @relation(fields: [slotId], references: [id])
-  status         BookingStatus @default(PENDING)
-  report         Report[]
-  payment        Payment?
-  amount         Float
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
 
-  @@index([userId, status])
-  @@index([status, createdAt])
-  @@index([testId, status])
-  @@map("booking")
+model Appointment {
+  id                String            @id @default(cuid())
+  appointmentNumber String            @unique @default(cuid())
+  userId            String
+  user              User              @relation(fields: [userId], references: [id])
+  slotId            String
+  slot              Timeslot          @relation(fields: [slotId], references: [id])
+  status            BookingStatus     `@default`(PENDING)
+  totalAmount       Float
+  notes             String?
+  items             AppointmentItem[]
+  payment           Payment?
+  createdAt         DateTime          `@default`(now())
+  updatedAt         DateTime          `@updatedAt`
+  report            Report?
+
+  @@index([userId, slotId])
+  @@map("appointment")
+  @@map("appointment")
 }
-model Timeslot {
-  id            String    @id @default(cuid())
+
+model AppointmentItem {
+  id            String      @id @default(cuid())
+  appointmentId String
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
   testId        String
-  test          Test      @relation(fields: [testId], references: [id], onDelete: Cascade)
-  
-  date          DateTime  @db.Date      
-  startTime     String                  
-  endTime       String                  
-  
-  currentBooked Int       @default(0)
-  maxBooked     Int       @default(2)
-  isActive      Boolean   @default(true)  
-  
-  bookings      Booking[]
-  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
-  @@unique([testId, date, startTime])
-  @@index([date, isActive])
-  @@index([testId])
+  test          Test        @relation(fields: [testId], references: [id])
+  price         Float
+  createdAt     DateTime    @default(now())
+
+  @@unique([appointmentId, testId])
+  @@map("appointment_item")
+}
+
+model Timeslot {
+  id        String   @id @default(cuid())
+  date      DateTime @db.Date
+  startTime String
+  endTime   String
+
+  currentPatients Int     @default(0)
+  maxPatients     Int     @default(2)
+  isActive        Boolean @default(true)
+
+  appointments Appointment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  test      Test?    @relation(fields: [testId], references: [id])
+  testId    String?
+
+  @@unique([date, startTime])
   @@map("timeslot")
 }
+
 model Report {
-  id         String   @id @default(cuid())
-  bookingId  String   
-  booking    Booking  @relation(fields: [bookingId], references: [id])
-  
-  fileUrl    String
-  fileName   String
-  fileSize   Int?
-  remarks    String?  @db.Text
-  
+  id            String      @id @default(cuid())
+  appointmentId String      @unique
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+
+  fileUrl  String
+  fileName String
+  fileSize Int?
+  remarks  String? @db.Text
+
   uploadedBy String
-  
-  version    Int      @default(1)     
-  isActive   Boolean  @default(true)  
-  replacedBy String?                  
-  
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  
-  @@index([bookingId, isActive])
+  replacedBy String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("report")
 }
-model Payment {
-  id              String   @id @default(cuid())
-  bookingId       String   @unique
-  booking         Booking  @relation(fields: [bookingId], references: [id])
-  userId          String
-  user            User     @relation(fields: [userId], references: [id])
-  amount          Float
-  currency        String   @default("INR")
-  
-  // Payment provider details
-  provider        String   // "razorpay", "stripe"
-  providerTxnId   String?  @unique
 
-  // Status (ONLY system sets these)
-  isPaid          Boolean  @default(false)
+model Payment {
+  id              String      @id @default(cuid())
+  appointmentId   String      @unique
+  appointment     Appointment @relation(fields: [appointmentId], references: [id])
+  userId          String
+  user            User        @relation(fields: [userId], references: [id])
+  amount          Float
+  currency        String      @default("INR")
+  provider        String
+  providerTxnId   String?     @unique
+  isPaid          Boolean     @default(false)
   paidAt          DateTime?
-  
-  // Webhook verification
-  webhookVerified Boolean  @default(false)
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
+  webhookVerified Boolean     @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([providerTxnId])
   @@index([isPaid])
 }
+
 model AuditLog {
-  id       String   @id @default(cuid())
-  userId   String
-  user     User     @relation(fields: [userId], references: [id])
-  
-  action   String   // Action performed
-  entity   String   // Entity type
-  entityId String   // Entity ID
-  
-  changes  Json?    // Before/after data
-  metadata Json?    // Additional context
-  
-  createdAt DateTime @default(now())
-  
-  @@index([userId])
-  @@index([entity, entityId])
+  id        String    @id @default(cuid())
+  actorType ActorType
+  actorId   String?
+  user      User?     @relation(fields: [actorId], references: [id])
+  action    String
+  entity    String
+  entityId  String
+  reason    String?
+  metadata  Json?
+  createdAt DateTime  `@default`(now())
+
   @@index([createdAt])
+  @@index([actorId])
+  @@index([entity, entityId])
   @@map("audit_log")
 }
-enum Role{
+
+enum Role {
   USER
-  LAB_STAFF
   ADMIN
 }
-enum BookingStatus{
+
+enum BookingStatus {
   PENDING
   CONFIRMED
   SAMPLE_COLLECTED
   PROCESSING
   COMPLETED
   CANCELLED
+}
+
+enum ActorType {
+  USER
+  SYSTEM
 }
