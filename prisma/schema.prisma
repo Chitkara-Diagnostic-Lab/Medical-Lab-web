@@ -199,10 +199,11 @@ model AuditLog {
   entityId  String
   reason    String?
   metadata  Json?
-  createdAt DateTime  @default(now())
+  createdAt DateTime  `@default`(now())
 
   @@index([createdAt])
   @@index([actorId])
+  @@index([entity, entityId])
   @@map("audit_log")
 }
 
