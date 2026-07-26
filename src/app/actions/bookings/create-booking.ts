@@ -3,7 +3,7 @@
 import { requireAuth } from '@/lib/server-auth'
 import { redirect } from 'next/navigation'
 import { createBookingSchema } from '@/lib/validation/booking'
-import { createBooking } from '@/lib/services/booking.service'
+import { createBooking } from '@/lib/services/booking_service'
 
 type BookingResult = { error: string } | void
 
