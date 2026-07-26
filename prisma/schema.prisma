@@ -102,16 +102,17 @@ model Appointment {
   user              User              @relation(fields: [userId], references: [id])
   slotId            String
   slot              Timeslot          @relation(fields: [slotId], references: [id])
-  status            BookingStatus     @default(PENDING)
+  status            BookingStatus     `@default`(PENDING)
   totalAmount       Float
   notes             String?
   items             AppointmentItem[]
   payment           Payment?
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  createdAt         DateTime          `@default`(now())
+  updatedAt         DateTime          `@updatedAt`
   report            Report?
 
-  @@unique([userId, slotId, status])
+  @@index([userId, slotId])
+  @@map("appointment")
   @@map("appointment")
 }
 
