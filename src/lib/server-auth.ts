@@ -1,7 +1,7 @@
 import { auth, Role, ROLES } from '@/lib/auth'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-import prisma from '@/lib/prisma'
+import {prisma} from '@/lib/prisma'
 
 export async function getServerSession(){
     try{
