@@ -111,8 +111,7 @@ model Appointment {
   updatedAt         DateTime          `@updatedAt`
   report            Report?
 
-  @@index([userId, slotId])
-  @@map("appointment")
+  @@unique([userId, slotId])
   @@map("appointment")
 }
 
