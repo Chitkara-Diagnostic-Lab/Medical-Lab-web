@@ -102,13 +102,13 @@ model Appointment {
   user              User              @relation(fields: [userId], references: [id])
   slotId            String
   slot              Timeslot          @relation(fields: [slotId], references: [id])
-  status            BookingStatus     @default(PENDING)
+  status            BookingStatus     `@default`(PENDING)
   totalAmount       Float
   notes             String?
   items             AppointmentItem[]
   payment           Payment?
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  createdAt         DateTime          `@default`(now())
+  updatedAt         DateTime          `@updatedAt`
   report            Report?
 
   @@unique([userId, slotId])
@@ -199,10 +199,11 @@ model AuditLog {
   entityId  String
   reason    String?
   metadata  Json?
-  createdAt DateTime  @default(now())
+  createdAt DateTime  `@default`(now())
 
   @@index([createdAt])
   @@index([actorId])
+  @@index([entity, entityId])
   @@map("audit_log")
 }
 
