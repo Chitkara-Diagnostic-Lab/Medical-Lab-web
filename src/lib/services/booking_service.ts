@@ -1,5 +1,5 @@
+import { Prisma } from "../../../generated/prisma/client";
 import { prisma } from "../prisma";
-import { getServerSession } from "../server-auth";
 import { isSlotInFuture } from "../utils/date";
 
 export interface CreateAppointmentInput {
@@ -59,13 +59,31 @@ export async function createAppointment(data: CreateAppointmentInput) {
             //calculate the total
             const totalAmount = test.reduce((sum, test) => sum + test.price, 0)
 
+            const appointmentresult = await tx.appointment.create({
+                data: {
+                    userId,
+                    slotId,
+                    status: "PENDING",
+                    totalAmount: totalAmount,
+                    items: {
+                        create: test.map((t) => ({
+                            testId: t.id,
+                            price: t.price,
+                        }))
+                    }
+                },
+                include: {
+                    items: { include: { test: true } },
+                    slot: true
+                }
+            })
+            return appointmentresult;
         })
-
-
-
-
-
+        return createappointment;
     } catch (error) {
-
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+            throw new Error("You already have an active booking for this slot")
+        }
+        throw error;
     }
 }

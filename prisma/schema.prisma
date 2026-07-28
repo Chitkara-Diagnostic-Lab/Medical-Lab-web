@@ -70,7 +70,7 @@ model Test {
   id               String            @id @default(cuid())
   name             String
   description      String?
-  price            Float
+  price            Decimal           @db.Decimal(10, 2)
   duration         Int
   category         String
   isActive         Boolean           @default(true)
@@ -102,16 +102,15 @@ model Appointment {
   user              User              @relation(fields: [userId], references: [id])
   slotId            String
   slot              Timeslot          @relation(fields: [slotId], references: [id])
-  status            BookingStatus     `@default`(PENDING)
-  totalAmount       Float
+  status            BookingStatus     @default(PENDING)
+  totalAmount       Decimal           @db.Decimal(10, 2)
   notes             String?
   items             AppointmentItem[]
   payment           Payment?
-  createdAt         DateTime          `@default`(now())
-  updatedAt         DateTime          `@updatedAt`
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
   report            Report?
 
-  @@unique([userId, slotId])
   @@map("appointment")
 }
 
@@ -121,7 +120,7 @@ model AppointmentItem {
   appointment   Appointment @relation(fields: [appointmentId], references: [id])
   testId        String
   test          Test        @relation(fields: [testId], references: [id])
-  price         Float
+  price         Decimal     @db.Decimal(10, 2)
   createdAt     DateTime    @default(now())
 
   @@unique([appointmentId, testId])
@@ -174,7 +173,7 @@ model Payment {
   appointment     Appointment @relation(fields: [appointmentId], references: [id])
   userId          String
   user            User        @relation(fields: [userId], references: [id])
-  amount          Float
+  amount          Decimal     @db.Decimal(10, 2)
   currency        String      @default("INR")
   provider        String
   providerTxnId   String?     @unique
@@ -199,7 +198,7 @@ model AuditLog {
   entityId  String
   reason    String?
   metadata  Json?
-  createdAt DateTime  `@default`(now())
+  createdAt DateTime  @default(now())
 
   @@index([createdAt])
   @@index([actorId])

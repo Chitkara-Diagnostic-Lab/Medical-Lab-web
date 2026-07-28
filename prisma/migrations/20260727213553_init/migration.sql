@@ -8,4 +8,6 @@
 DROP INDEX "appointment_userId_slotId_status_key";
 
 -- CreateIndex
-CREATE UNIQUE INDEX "appointment_userId_slotId_key" ON "appointment"("userId", "slotId");
+CREATE UNIQUE INDEX "unique_active_appointment_per_slot"
+ON "appointment" ("userId", "slotId")
+WHERE "status" IN ('PENDING', 'CONFIRMED');
