@@ -1,9 +1,9 @@
-import { 
-  LayoutDashboard, 
-  Calendar, 
-  FileText, 
-  TestTube, 
-  Users, 
+import {
+  LayoutDashboard,
+  Calendar,
+  FileText,
+  TestTube,
+  Users,
   Settings,
   Upload,
   ClipboardList,
@@ -160,8 +160,6 @@ export function getNavigationForRole(role: string): NavSection[] {
   switch (role) {
     case "admin":
       return adminNavigation
-    case "lab_staff":
-      return labNavigation
     case "user":
     default:
       return userNavigation

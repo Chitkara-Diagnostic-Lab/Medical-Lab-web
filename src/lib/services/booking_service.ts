@@ -1,88 +1,113 @@
 import { Prisma } from "../../../generated/prisma/client";
 import { prisma } from "../prisma";
 import { isSlotInFuture } from "../utils/date";
+import {
+    NoTestsSelectedError,
+    DuplicateTestError,
+    TestNotFoundError,
+    SlotNotFoundError,
+    SlotFullError,
+    PastSlotError,
+    DuplicateBookingError,
+    InvalidAmountError,
+} from "../errors/booking.errors";
 
 export interface CreateAppointmentInput {
-    userId: string,
-    slotId: string,
-    tests: string[],
+    userId: string;
+    slotId: string;
+    tests: string[];
 }
 
 export async function createAppointment(data: CreateAppointmentInput) {
+    const { userId, slotId, tests } = data;
+
+    if (!tests.length) {
+        throw new NoTestsSelectedError();
+    }
+
+    const hasDuplicates = new Set(tests).size !== tests.length;
+    if (hasDuplicates) {
+        throw new DuplicateTestError();
+    }
+
     try {
-        const { userId, slotId, tests } = data;
-        if (!tests.length) {
-            throw new Error("No tests selected")
-        }
-        const testduplicate = tests.filter((test, index) => tests.indexOf(test) !== index).length > 0;
-        if (testduplicate) {
-            throw new Error("Duplicate tests selected")
-        }
-        const createappointment = await prisma.$transaction(async (tx) => {
-            //validate test
-            const test = await tx.test.findMany({
+        const appointment = await prisma.$transaction(async (tx) => {
+            // Validate tests exist and are active
+            const validTests = await tx.test.findMany({
                 where: {
-                    id: {
-                        in: tests
-                    },
-                    isActive: true
-                }
-            });
-            if (test.length !== tests.length) {
-                throw new Error("Some tests are inactive or invalid")
-            }
-            //validaate slot
-            const slot = await tx.timeslot.findUnique({
-                where: {
-                    id: slotId,
+                    id: { in: tests },
+                    isActive: true,
                 },
-            })
+            });
+
+            if (validTests.length !== tests.length) {
+                throw new TestNotFoundError();
+            }
+
+            // Validate slot exists and is active
+            const slot = await tx.timeslot.findUnique({
+                where: { id: slotId },
+            });
+
             if (!slot || !slot.isActive) {
-                throw new Error("Slot is not active or invalid")
+                throw new SlotNotFoundError();
             }
+
             if (!isSlotInFuture(slot.date, slot.startTime)) {
-                throw new Error("Slot is in the past")
+                throw new PastSlotError();
             }
-            const checkslot = await tx.timeslot.updateMany({
+
+            // Atomically reserve the slot (optimistic concurrency)
+            const reserved = await tx.timeslot.updateMany({
                 where: {
                     id: slotId,
                     currentPatients: { lt: slot.maxPatients },
-                    isActive: true
+                    isActive: true,
                 },
                 data: {
                     currentPatients: { increment: 1 },
-                }
-            })
-            if (checkslot.count === 0) {
-                throw new Error("Slot is full")
-            }
-            //calculate the total
-            const totalAmount = test.reduce((sum, test) => sum + test.price, 0)
+                },
+            });
 
-            const appointmentresult = await tx.appointment.create({
+            if (reserved.count === 0) {
+                throw new SlotFullError();
+            }
+
+            const totalAmount = validTests.reduce(
+                (sum, t) => sum.add(t.price),
+                new Prisma.Decimal(0)
+            );
+
+            if (totalAmount.lte(0)) {
+                throw new InvalidAmountError();
+            }
+
+            // Create appointment with items
+            return tx.appointment.create({
                 data: {
                     userId,
                     slotId,
                     status: "PENDING",
-                    totalAmount: totalAmount,
+                    totalAmount,
                     items: {
-                        create: test.map((t) => ({
+                        create: validTests.map((t) => ({
                             testId: t.id,
                             price: t.price,
-                        }))
-                    }
+                        })),
+                    },
                 },
                 include: {
                     items: { include: { test: true } },
-                    slot: true
-                }
-            })
-            return appointmentresult;
-        })
-        return createappointment;
+                    slot: true,
+                },
+            });
+        });
+
+        return appointment;
     } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-            throw new Error("You already have an active booking for this slot")
+        // Re-throw our custom errors as-is
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+            throw new DuplicateBookingError();
         }
         throw error;
     }

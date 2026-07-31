@@ -9,21 +9,31 @@ export class BookingError extends Error {
   }
 }
 
-export class TestNotFoundError extends BookingError {
+// ── Test Errors ──
+
+export class NoTestsSelectedError extends BookingError {
   constructor() {
-    super('Test not found or inactive', 'TEST_NOT_FOUND', 404)
+    super('Select at least one test to book', 'NO_TESTS_SELECTED', 400)
   }
 }
+
+export class DuplicateTestError extends BookingError {
+  constructor() {
+    super('Duplicate tests are not allowed', 'DUPLICATE_TESTS', 400)
+  }
+}
+
+export class TestNotFoundError extends BookingError {
+  constructor() {
+    super('One or more tests are inactive or invalid', 'TEST_NOT_FOUND', 404)
+  }
+}
+
+// ── Slot Errors ──
 
 export class SlotNotFoundError extends BookingError {
   constructor() {
-    super('Invalid slot for test', 'SLOT_NOT_FOUND', 404)
-  }
-}
-
-export class SlotInactiveError extends BookingError {
-  constructor() {
-    super('This time slot is no longer available', 'SLOT_INACTIVE', 400)
+    super('Time slot not found or inactive', 'SLOT_NOT_FOUND', 404)
   }
 }
 
@@ -39,13 +49,22 @@ export class PastSlotError extends BookingError {
   }
 }
 
+// ── Booking Errors ──
+
 export class DuplicateBookingError extends BookingError {
   constructor() {
     super('You already have a booking for this time slot', 'DUPLICATE_BOOKING', 409)
   }
 }
+
 export class BookingNotFoundError extends BookingError {
   constructor(message = 'Booking not found') {
     super(message, 'BOOKING_NOT_FOUND', 404)
+  }
+}
+
+export class InvalidAmountError extends BookingError {
+  constructor() {
+    super('Calculated total amount is invalid', 'INVALID_AMOUNT', 400)
   }
 }
