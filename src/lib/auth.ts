@@ -33,7 +33,6 @@ export const auth = betterAuth({
 
 export const ROLES = {
   USER: "USER" as const,
-  LAB_STAFF: "LAB_STAFF" as const,
   ADMIN: "ADMIN" as const,
 } as const;
 

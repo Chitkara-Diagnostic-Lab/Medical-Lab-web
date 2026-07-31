@@ -16,8 +16,8 @@ import {
 import { requireRole, ROLES } from "@/lib/server-auth"
 
 export default async function Page() {
-  const session = await requireRole([ROLES.USER, ROLES.LAB_STAFF, ROLES.ADMIN])
-  
+  const session = await requireRole([ROLES.USER, ROLES.ADMIN])
+
   return (
     <SidebarProvider>
       <AppSidebar />

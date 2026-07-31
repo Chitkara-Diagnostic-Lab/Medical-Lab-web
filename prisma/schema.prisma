@@ -18,7 +18,7 @@ model User {
   email         String        @unique
   emailVerified Boolean       @default(false)
   name          String
-  PhoneNumber   String?
+  phone_number  String?
   image         String?
   role          Role          @default(USER)
   sessions      Session[]
@@ -74,7 +74,6 @@ model Test {
   duration         Int
   category         String
   isActive         Boolean           @default(true)
-  slots            Timeslot[]
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   appointmentItems AppointmentItem[]
@@ -141,8 +140,6 @@ model Timeslot {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  test      Test?    @relation(fields: [testId], references: [id])
-  testId    String?
 
   @@unique([date, startTime])
   @@map("timeslot")
@@ -186,6 +183,7 @@ model Payment {
 
   @@index([providerTxnId])
   @@index([isPaid])
+  @@map("payment")
 }
 
 model AuditLog {
