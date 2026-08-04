@@ -56,6 +56,18 @@ export async function PaymentWebhookHandler(payload: PaymentWebhookPayload) {
         if (result.count === 0) {
             return;
         }
+        const appointmentUpdated = await tx.appointment.updateMany({
+            where: {
+                id: payment.appointment.id,
+                status: "PENDING",
+            },
+            data: {
+                status: "CONFIRMED",
+            }
+        })
+        if (appointmentUpdated.count === 0) {
+            return;
+        }
         const updateAppointmentStatus = await tx.appointment.update({
             where: {
                 id: payment.appointment.id,
