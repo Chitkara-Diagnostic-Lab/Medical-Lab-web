@@ -41,7 +41,6 @@ export async function POST(request: Request) {
     if (event === 'payment.captured') {
         const payment = payload.payment.entity;
         await PaymentWebhookHandler(
-            event,
             {
                 order_id: payment.order_id,
                 id: payment.id,

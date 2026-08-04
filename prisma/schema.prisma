@@ -165,18 +165,19 @@ model Report {
 }
 
 model Payment {
-  id              String      @id @default(cuid())
-  appointmentId   String      @unique
-  appointment     Appointment @relation(fields: [appointmentId], references: [id])
-  userId          String
-  user            User        @relation(fields: [userId], references: [id])
-  amount          Decimal     @db.Decimal(10, 2)
-  currency        String      @default("INR")
-  provider        String
-  providerTxnId   String?     @unique
-  isPaid          Boolean     @default(false)
-  paidAt          DateTime?
-  webhookVerified Boolean     @default(false)
+  id                String      @id @default(cuid())
+  appointmentId     String      @unique
+  appointment       Appointment @relation(fields: [appointmentId], references: [id])
+  userId            String
+  user              User        @relation(fields: [userId], references: [id])
+  amount            Decimal     @db.Decimal(10, 2)
+  currency          String      @default("INR")
+  provider          String
+  providerTxnId     String?     @unique
+  providerPaymentId String?     @unique
+  isPaid            Boolean     @default(false)
+  paidAt            DateTime?
+  webhookVerified   Boolean     @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
