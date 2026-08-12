@@ -68,7 +68,7 @@ model Account {
 
 model Test {
   id               String            @id @default(cuid())
-  name             String
+  name             String            @unique
   description      String?
   price            Decimal           @db.Decimal(10, 2)
   duration         Int
@@ -133,7 +133,7 @@ model Timeslot {
   endTime   String
 
   currentPatients Int     @default(0)
-  maxPatients     Int     @default(2)
+  maxPatients     Int     @default(5)
   isActive        Boolean @default(true)
 
   appointments Appointment[]

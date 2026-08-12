@@ -2,9 +2,16 @@ import Razorpay from 'razorpay'
 import { prisma } from '../prisma';
 import { Prisma } from '../../../generated/prisma/client';
 
+const razorpayKeyId = process.env.RAZORPAY_KEY_ID;
+const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET;
+
+if (!razorpayKeyId || !razorpayKeySecret) {
+    throw new Error("RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be set");
+}
+
 const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET,
+    key_id: razorpayKeyId,
+    key_secret: razorpayKeySecret,
 })
 
 export interface CreatePaymentSessionInput {

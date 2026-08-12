@@ -68,14 +68,6 @@ export async function PaymentWebhookHandler(payload: PaymentWebhookPayload) {
         if (appointmentUpdated.count === 0) {
             return;
         }
-        const updateAppointmentStatus = await tx.appointment.update({
-            where: {
-                id: payment.appointment.id,
-            },
-            data: {
-                status: "CONFIRMED",
-            }
-        })
         await tx.auditLog.create({
             data: {
                 actorType: "SYSTEM",
@@ -95,7 +87,7 @@ export async function PaymentWebhookHandler(payload: PaymentWebhookPayload) {
         })
         return {
             payment: result,
-            appointment: updateAppointmentStatus,
+            appointment: appointmentUpdated,
         }
 
     })

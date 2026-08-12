@@ -158,9 +158,9 @@ export const adminNavigation: NavSection[] = [
 // Helper to get navigation based on role
 export function getNavigationForRole(role: string): NavSection[] {
   switch (role) {
-    case "admin":
+    case "ADMIN":
       return adminNavigation
-    case "user":
+    case "USER":
     default:
       return userNavigation
   }

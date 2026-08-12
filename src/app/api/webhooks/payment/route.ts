@@ -39,16 +39,22 @@ export async function POST(request: Request) {
     const payload = parsedbody.payload;
 
     if (event === 'payment.captured') {
-        const payment = payload.payment.entity;
-        await PaymentWebhookHandler(
-            {
-                order_id: payment.order_id,
-                id: payment.id,
-                amount: payment.amount,
-                currency: payment.currency,
-                status: payment.status,
-            }
-        );
+
+        try {
+            const payment = payload.payment.entity;
+            await PaymentWebhookHandler(
+                {
+                    order_id: payment.order_id,
+                    id: payment.id,
+                    amount: payment.amount,
+                    currency: payment.currency,
+                    status: payment.status,
+                }
+            );
+        } catch (error) {
+            console.error("Webhook handler failed", error);
+            return NextResponse.json({ message: "Webhook handler failed", success: false }, { status: 500 });
+        }
     }
 
     console.log("Webhook hit");
