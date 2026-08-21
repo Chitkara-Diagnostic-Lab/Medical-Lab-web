@@ -24,7 +24,7 @@ export async function signUpAction(
     // Validate with Zod
     const parsed = formSchema.safeParse(rawData);
     if (!parsed.success) {
-        const firstError = parsed.error.errors[0]?.message ?? "Validation failed";
+        const firstError = parsed.error.issues[0]?.message ?? "Validation failed";
         return {
             success: false,
             error: firstError
@@ -34,9 +34,9 @@ export async function signUpAction(
     try {
         const result = await auth.api.signUpEmail({
             body: {
+                name: parsed.data.name,
                 email: parsed.data.email,
                 password: parsed.data.password,
-                name: parsed.data.name,
             },
             headers: await headers(),
         });
@@ -55,7 +55,7 @@ export async function signUpAction(
         };
     }
 
-    redirect('/me/dashboard');
+    redirect('/');
 }
 
 export async function signInAction(
@@ -95,7 +95,7 @@ export async function signInAction(
         };
     }
 
-    redirect('/me/dashboard');
+    redirect('/');
 }
 
 export async function signOutAction(): Promise<ActionResult> {

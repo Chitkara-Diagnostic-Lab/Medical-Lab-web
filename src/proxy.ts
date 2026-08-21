@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const sessionCookie = request.cookies.get("better-auth.session_token")
 
   const protectedRoutes = ["/me", "/admin", "/lab", "/payment"]
