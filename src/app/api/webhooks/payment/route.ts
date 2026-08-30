@@ -2,14 +2,33 @@ import { PaymentWebhookHandler } from '@/lib/services/payment_webhook';
 import crypto from 'crypto'
 import { NextResponse } from "next/server";
 
-const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
 
 
-export async function verifySignature(body: string, signature: string) {
-    const hmac = crypto.createHmac('sha256', secret!)
+export async function verifySignature(
+    body: string,
+    signature: string
+) {
+    const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    if (!secret) {
+        throw new Error("RAZORPAY_WEBHOOK_SECRET is not configured");
+    }
+
+    const expectedSignature = crypto
+        .createHmac("sha256", secret)
         .update(body)
-        .digest('hex');
-    return crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(signature));
+        .digest("hex");
+
+    const signatureBuffer = Buffer.from(signature, "hex");
+    const expectedBuffer = Buffer.from(expectedSignature, "hex");
+
+    if (signatureBuffer.length !== expectedBuffer.length) {
+        return false;
+    }
+
+    return crypto.timingSafeEqual(
+        expectedBuffer,
+        signatureBuffer
+    );
 }
 
 export async function POST(request: Request) {
