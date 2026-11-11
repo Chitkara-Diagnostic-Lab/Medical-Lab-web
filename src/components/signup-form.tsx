@@ -9,57 +9,29 @@ import {
   FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { useForm } from "react-hook-form"
 import { toast } from "sonner"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useState } from "react"
-import { authClient } from "@/lib/auth-cilent"
-import { FormData, formSchema } from "@/lib/validation/auth_zod";
-
-
+import { useActionState, useEffect } from "react"
+import { signUpAction, ActionResult } from "@/app/actions/auth"
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
-  const [isLoading, setIsLoading] = useState(false)
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    mode: "onChange", // Add this to validate on change
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    }
-  })
+  const [state, formAction, isPending] = useActionState<ActionResult | null, FormData>(
+    signUpAction,
+    null
+  )
 
-  async function onSubmit(data: FormData) {
-    setIsLoading(true);
-    try {
-      const result = await authClient.signUp.email({
-        name: data.name,
-        email: data.email,
-        password: data.password,
-        callbackURL: "/dashboard",
-      });
-      if (!result) {
-        toast.error("Failed to create account. Please try again.");
-        return;
-      }
-      toast.success("Account created successfully!");
-    } catch (err) {
-      toast.error("Failed to create account. Please try again.");
-    } finally {
-      setIsLoading(false);
-      form.reset();
+  useEffect(() => {
+    if (state?.success === false) {
+      toast.error(state.error)
     }
-  }
+  }, [state])
 
   return (
     <form 
       className={cn("flex flex-col max-w-md mx-auto", className)} 
-      onSubmit={form.handleSubmit(onSubmit)}
+      action={formAction}
       {...props}
     >
       <div className="flex flex-col items-center gap-1 text-center mb-6">
@@ -72,35 +44,28 @@ export function SignupForm({
         <div className="space-y-2">
           <FieldLabel htmlFor="name">Full Name</FieldLabel>
           <Input 
+            name="name"
             id="name" 
             type="text" 
             placeholder="John Doe" 
-            {...form.register("name")}
+            disabled={isPending}
+            required
           />
-          {form.formState.errors.name && (
-            <FieldDescription className="text-red-500 mt-1!">
-              {form.formState.errors.name.message}
-            </FieldDescription>
-          )}
         </div>
 
         <div className="space-y-2">
           <FieldLabel htmlFor="email">Email</FieldLabel>
           <Input 
+            name="email"
             id="email" 
             type="email" 
             placeholder="m@example.com" 
-            {...form.register("email")}
+            disabled={isPending}
+            required
           />
-          {form.formState.errors.email ? (
-            <FieldDescription className="text-red-500 mt-1!">
-              {form.formState.errors.email.message}
-            </FieldDescription>
-          ) : (
-            <FieldDescription className="mt-1!">
-              We&apos;ll use this to contact you. We will not share your email with anyone else.
-            </FieldDescription>
-          )}
+          <FieldDescription className="mt-1!">
+            We&apos;ll use this to contact you. We will not share your email with anyone else.
+          </FieldDescription>
         </div>
 
         <div className="space-y-2">
@@ -108,40 +73,31 @@ export function SignupForm({
             <div className="space-y-2">
               <FieldLabel htmlFor="password">Password</FieldLabel>
               <Input 
+                name="password"
                 id="password" 
                 type="password" 
-                {...form.register("password")}
+                disabled={isPending}
+                required
               />
             </div>
             <div className="space-y-2">
-              <FieldLabel htmlFor="confirm-password">Confirm Password</FieldLabel>
+              <FieldLabel htmlFor="confirmPassword">Confirm Password</FieldLabel>
               <Input 
-                id="confirm-password" 
+                name="confirmPassword"
+                id="confirmPassword" 
                 type="password" 
-                {...form.register("confirmPassword")}
+                disabled={isPending}
+                required
               />
             </div>
           </div>
-          
-          {form.formState.errors.password && (
-            <FieldDescription className="text-red-500 mt-1!">
-              {form.formState.errors.password.message}
-            </FieldDescription>
-          )}
-          {form.formState.errors.confirmPassword && (
-            <FieldDescription className="text-red-500 mt-1!">
-              {form.formState.errors.confirmPassword.message}
-            </FieldDescription>
-          )}
-          {!form.formState.errors.password && !form.formState.errors.confirmPassword && (
-            <FieldDescription className="mt-1!">
-              Must be at least 8 characters long.
-            </FieldDescription>
-          )}
+          <FieldDescription className="mt-1!">
+            Must be at least 8 characters long.
+          </FieldDescription>
         </div>
 
-        <Button type="submit" disabled={isLoading} className="w-full">
-          {isLoading ? "Creating Account..." : "Create Account"}
+        <Button type="submit" disabled={isPending} className="w-full">
+          {isPending ? "Creating Account..." : "Create Account"}
         </Button>
 
         <FieldSeparator>Or continue with</FieldSeparator>

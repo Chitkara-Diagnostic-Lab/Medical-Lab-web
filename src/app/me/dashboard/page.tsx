@@ -1,45 +1,60 @@
-import { auth } from "@/lib/auth";
-import { LogoutButton } from "@/components/logout-btn";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { AppSidebar } from "@/components/app-sidebar"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+import { Separator } from "@/components/ui/separator"
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
+import { requireRole, ROLES } from "@/lib/server-auth"
 
-export default async function DashboardPage() {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
-    if (!session?.user) {
-        redirect("/signin");
-    }
-    const role = session.user.role;
-    if (role === "admin") {
-        redirect("/admin/dashboard");
-    } else if (role === "lab_staff") {
-        redirect("/lab/dashboard");
-    }
-
-    return (
-        <div className="p-8">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">Dashboard</h1>
-                <LogoutButton />
-            </div>
-            
-            <div className="bg-gray-100 p-4 rounded-lg">
-                <h2 className="text-xl font-semibold mb-2">User Information</h2>
-                <div className="grid gap-2 mb-4">
-                    <p><strong>Name:</strong> {session.user.name}</p>
-                    <p><strong>Email:</strong> {session.user.email}</p>
-                    <p><strong>Role:</strong> <span className="px-2 py-1 bg-blue-500 text-white rounded text-sm">{session.user.role}</span></p>
-                    <p><strong>Email Verified:</strong> {session.user.emailVerified ? "Yes" : "No"}</p>
-                </div>
-                
-                <details className="mt-4">
-                    <summary className="cursor-pointer font-semibold mb-2">Full Session Data</summary>
-                    <pre className="bg-white p-4 rounded overflow-auto text-sm">
-                        {JSON.stringify(session, null, 2)}
-                    </pre>
-                </details>
-            </div>
+export default async function Page() {
+  const session = await requireRole([ROLES.USER, ROLES.LAB_STAFF, ROLES.ADMIN])
+  
+  return (
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator
+              orientation="vertical"
+              className="mr-2 data-[orientation=vertical]:h-4"
+            />
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem className="hidden md:block">
+                  <BreadcrumbLink href="#">
+                    Home
+                    <span>{session.user.name}</span>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden md:block" />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Data Fetching</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+        </header>
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+          <div className="grid auto-rows-min gap-4 md:grid-cols-3">
+            <div className="bg-muted/50 aspect-video rounded-xl" />
+            <div className="bg-muted/50 aspect-video rounded-xl" />
+            <div className="bg-muted/50 aspect-video rounded-xl" />
+          </div>
+          <div className="bg-muted/50 min-h-screen flex-1 rounded-xl md:min-h-min" />
         </div>
-    );
+      </SidebarInset>
+    </SidebarProvider>
+  )
 }
+
