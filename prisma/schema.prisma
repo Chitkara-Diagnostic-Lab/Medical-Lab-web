@@ -14,19 +14,21 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  emailVerified Boolean   @default(false)
+  id            String        @id @default(cuid())
+  email         String        @unique
+  emailVerified Boolean       @default(false)
   name          String
   PhoneNumber   String?
   image         String?
-  role          Role      @default(USER)
+  role          Role          @default(USER)
   sessions      Session[]
   accounts      Account[]
-  bookings      Booking[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
+  appointments  Appointment[]
+  payments      Payment[]
+  auditLogs     AuditLog[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
   @@map("user")
 }
 
@@ -64,19 +66,23 @@ model Account {
   @@map("account")
 }
 
-model Test{
-  id    String  @id @default(cuid())
-  name  String
-  description   String?
-  price       Float
-  duration    String
-  category    String
-  isActive    Boolean   @default(true)
-  bookings    Booking[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+model Test {
+  id               String            @id @default(cuid())
+  name             String
+  description      String?
+  price            Decimal           @db.Decimal(10, 2)
+  duration         Int
+  category         String
+  isActive         Boolean           @default(true)
+  slots            Timeslot[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  appointmentItems AppointmentItem[]
 
+  @@index([isActive, category])
+  @@map("test")
 }
+
 model Verification {
   id         String   @id @default(cuid())
   identifier String
@@ -88,38 +94,133 @@ model Verification {
   @@unique([identifier, value])
   @@map("verification")
 }
-model Booking {
-  id             String   @id @default(cuid())
-  userId         String
-  user           User     @relation(fields: [userId], references: [id])
-  testId         String
-  test           Test     @relation(fields: [testId], references: [id])
-  collectionDate DateTime
-  collectionTime String
-  status         BookingStatus @default(PENDING)
-  report         Report?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+
+model Appointment {
+  id                String            @id @default(cuid())
+  appointmentNumber String            @unique @default(cuid())
+  userId            String
+  user              User              @relation(fields: [userId], references: [id])
+  slotId            String
+  slot              Timeslot          @relation(fields: [slotId], references: [id])
+  status            BookingStatus     @default(PENDING)
+  totalAmount       Decimal           @db.Decimal(10, 2)
+  notes             String?
+  items             AppointmentItem[]
+  payment           Payment?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  report            Report?
+
+  @@map("appointment")
 }
+
+model AppointmentItem {
+  id            String      @id @default(cuid())
+  appointmentId String
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+  testId        String
+  test          Test        @relation(fields: [testId], references: [id])
+  price         Decimal     @db.Decimal(10, 2)
+  createdAt     DateTime    @default(now())
+
+  @@unique([appointmentId, testId])
+  @@map("appointment_item")
+}
+
+model Timeslot {
+  id        String   @id @default(cuid())
+  date      DateTime @db.Date
+  startTime String
+  endTime   String
+
+  currentPatients Int     @default(0)
+  maxPatients     Int     @default(2)
+  isActive        Boolean @default(true)
+
+  appointments Appointment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  test      Test?    @relation(fields: [testId], references: [id])
+  testId    String?
+
+  @@unique([date, startTime])
+  @@map("timeslot")
+}
+
 model Report {
-  id         String   @id @default(cuid())
-  bookingId  String   @unique
-  booking    Booking  @relation(fields: [bookingId], references: [id])
-  fileUrl    String?
-  remarks    String?
+  id            String      @id @default(cuid())
+  appointmentId String      @unique
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+
+  fileUrl  String
+  fileName String
+  fileSize Int?
+  remarks  String? @db.Text
+
   uploadedBy String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  replacedBy String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("report")
 }
-enum Role{
+
+model Payment {
+  id              String      @id @default(cuid())
+  appointmentId   String      @unique
+  appointment     Appointment @relation(fields: [appointmentId], references: [id])
+  userId          String
+  user            User        @relation(fields: [userId], references: [id])
+  amount          Decimal     @db.Decimal(10, 2)
+  currency        String      @default("INR")
+  provider        String
+  providerTxnId   String?     @unique
+  isPaid          Boolean     @default(false)
+  paidAt          DateTime?
+  webhookVerified Boolean     @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([providerTxnId])
+  @@index([isPaid])
+}
+
+model AuditLog {
+  id        String    @id @default(cuid())
+  actorType ActorType
+  actorId   String?
+  user      User?     @relation(fields: [actorId], references: [id])
+  action    String
+  entity    String
+  entityId  String
+  reason    String?
+  metadata  Json?
+  createdAt DateTime  @default(now())
+
+  @@index([createdAt])
+  @@index([actorId])
+  @@index([entity, entityId])
+  @@map("audit_log")
+}
+
+enum Role {
   USER
-  LAB_STAFF
   ADMIN
 }
-enum BookingStatus{
+
+enum BookingStatus {
   PENDING
+  CONFIRMED
   SAMPLE_COLLECTED
   PROCESSING
   COMPLETED
   CANCELLED
+}
+
+enum ActorType {
+  USER
+  SYSTEM
 }
