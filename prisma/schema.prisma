@@ -18,7 +18,7 @@ model User {
   email         String        @unique
   emailVerified Boolean       @default(false)
   name          String
-  PhoneNumber   String?
+  phone_number  String?
   image         String?
   role          Role          @default(USER)
   sessions      Session[]
@@ -68,13 +68,12 @@ model Account {
 
 model Test {
   id               String            @id @default(cuid())
-  name             String
+  name             String            @unique
   description      String?
   price            Decimal           @db.Decimal(10, 2)
   duration         Int
   category         String
   isActive         Boolean           @default(true)
-  slots            Timeslot[]
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   appointmentItems AppointmentItem[]
@@ -134,15 +133,13 @@ model Timeslot {
   endTime   String
 
   currentPatients Int     @default(0)
-  maxPatients     Int     @default(2)
+  maxPatients     Int     @default(5)
   isActive        Boolean @default(true)
 
   appointments Appointment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  test      Test?    @relation(fields: [testId], references: [id])
-  testId    String?
 
   @@unique([date, startTime])
   @@map("timeslot")
@@ -168,24 +165,26 @@ model Report {
 }
 
 model Payment {
-  id              String      @id @default(cuid())
-  appointmentId   String      @unique
-  appointment     Appointment @relation(fields: [appointmentId], references: [id])
-  userId          String
-  user            User        @relation(fields: [userId], references: [id])
-  amount          Decimal     @db.Decimal(10, 2)
-  currency        String      @default("INR")
-  provider        String
-  providerTxnId   String?     @unique
-  isPaid          Boolean     @default(false)
-  paidAt          DateTime?
-  webhookVerified Boolean     @default(false)
+  id                String      @id @default(cuid())
+  appointmentId     String      @unique
+  appointment       Appointment @relation(fields: [appointmentId], references: [id])
+  userId            String
+  user              User        @relation(fields: [userId], references: [id])
+  amount            Decimal     @db.Decimal(10, 2)
+  currency          String      @default("INR")
+  provider          String
+  providerTxnId     String?     @unique
+  providerPaymentId String?     @unique
+  isPaid            Boolean     @default(false)
+  paidAt            DateTime?
+  webhookVerified   Boolean     @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([providerTxnId])
   @@index([isPaid])
+  @@map("payment")
 }
 
 model AuditLog {

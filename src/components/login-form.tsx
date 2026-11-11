@@ -27,9 +27,9 @@ export function LoginForm({
       toast.error(state.error)
     }
   }, [state])
-  
+
   return (
-    <form 
+    <form
       action={formAction}
       className={cn("flex flex-col gap-6", className)} {...props}>
       <FieldGroup>
@@ -41,11 +41,11 @@ export function LoginForm({
         </div>
         <Field>
           <FieldLabel htmlFor="email">Email</FieldLabel>
-          <Input 
+          <Input
             name="email"
-            id="email" 
-            type="email" 
-            placeholder="m@example.com" 
+            id="email"
+            type="email"
+            placeholder="m@example.com"
             disabled={isPending}
             required
           />
@@ -60,18 +60,18 @@ export function LoginForm({
               Forgot your password?
             </a>
           </div>
-          <Input 
+          <Input
             name="password"
-            id="password" 
-            type="password" 
+            id="password"
+            type="password"
             disabled={isPending}
             required
           />
         </Field>
         <Field>
-          <Button 
+          <Button
             type="submit"
-            disabled={isPending}  
+            disabled={isPending}
           >
             {isPending ? "Signing in..." : "Login"}
           </Button>

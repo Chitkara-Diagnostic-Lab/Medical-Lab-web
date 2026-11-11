@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { signOut } from "@/lib/auth-cilent"
+import { signOut } from "@/lib/auth-client"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -19,12 +19,13 @@ export function LogoutButton() {
                         toast.success("Logged out successfully")
                         router.push("/signin")
                     },
-                    onError: (ctx) => {
+                    onError: () => {
                         toast.error("Failed to logout")
                     }
                 }
             })
-        } catch (error) {
+        } catch(error) {
+            console.error("Logout error:", error)
             toast.error("An error occurred during logout")
         } finally {
             setIsLoading(false)
@@ -32,8 +33,8 @@ export function LogoutButton() {
     }
 
     return (
-        <Button 
-            variant="destructive" 
+        <Button
+            variant="destructive"
             onClick={handleLogout}
             disabled={isLoading}
         >
